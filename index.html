@@ -1,1 +1,912 @@
+<!DOCTYPE html>
+<html lang="lb">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>P4 – De Kierper (2 Spiller)</title>
 
+<style>
+@font-face{
+  font-family:'Schoulschrëft';
+  src:url('https://raw.githubusercontent.com/albrechtclaire1007/schoulschreft/main/schoulschreft_bold%5B2%5D.TTF') format('truetype');
+  font-weight:bold; font-style:normal; font-display:swap;
+}
+
+:root{
+  /* P4 (matching your provided style) */
+  --bg1:#E9DDF7;
+  --bg2:#C9B3EE;
+
+  --bar:#B8A3E8;
+  --barBorder:#8E73D6;
+
+  --ink:#1f1f1f;
+  --white:#fff;
+  --border:3px;
+  --shadow:0 10px 24px rgba(0,0,0,.08);
+  --pad:clamp(10px,2.2vw,16px);
+  --r:18px;
+
+  --iconArrow:"https://i.postimg.cc/k6VtHrh0/p4arrow.png";
+  --iconPlay:"https://i.postimg.cc/WFDJyRHR/p4play.png";
+  --iconReplay:"https://i.postimg.cc/BL81zWVs/p4replay.png";
+
+  --good:#b7f0c8;
+  --bad:#ffcccc;
+}
+
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent; user-select:none; outline:none;}
+html,body{
+  height:100%; margin:0;
+  background:linear-gradient(135deg,var(--bg2),var(--bg1));
+  color:var(--ink);
+  font-family:'Schoulschrëft', Arial, sans-serif;
+}
+
+.topBar{
+  position:sticky; top:10px; z-index:10;
+  width:min(1200px,96vw);
+  margin:10px auto 0;
+  background:var(--bar);
+  border:var(--border) solid var(--barBorder);
+  border-radius:999px;
+  box-shadow:var(--shadow);
+  padding:10px 12px;
+
+  display:grid;
+  grid-template-columns: 70px 1fr auto;
+  align-items:center;
+  gap:10px;
+}
+
+.barBtn{
+  border:none; background:transparent;
+  cursor:pointer;
+  display:grid; place-items:center;
+  width:54px; height:54px;
+}
+.barBtn:active{transform:scale(.98);}
+.barBtn img{width:46px; height:46px; object-fit:contain;}
+.barBtn.back img{transform:rotate(180deg);}
+
+.barTitle{
+  text-align:center;
+  color:#fff;
+  font-size:clamp(1.35rem,3.1vw,2.25rem);
+  margin:0;
+  line-height:1.1;
+  padding:0 6px;
+}
+
+.barRight{display:flex; align-items:center; gap:6px;}
+.barRight .barBtn{width:50px; height:50px;}
+.barRight .barBtn img{width:42px; height:42px;}
+
+.wrap{
+  width:min(1200px,96vw);
+  margin:18px auto 26px;
+  padding:var(--pad);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.card{
+  background:rgba(255,255,255,.82);
+  border:var(--border) solid rgba(255,255,255,.65);
+  border-radius:var(--r);
+  box-shadow:var(--shadow);
+  padding:clamp(12px,2.2vw,18px);
+}
+.cardTitle{
+  margin:0 0 8px 0;
+  font-size:clamp(1.05rem,2.1vw,1.45rem);
+  opacity:.92;
+}
+.sub{
+  margin:0 0 10px 0;
+  font-size:clamp(.98rem,1.8vw,1.1rem);
+  opacity:.9;
+}
+.row{
+  display:flex; gap:12px; flex-wrap:wrap;
+  align-items:flex-start;
+}
+.pill{
+  display:inline-flex; align-items:center; gap:8px;
+  padding:10px 12px;
+  border-radius:999px;
+  border:3px solid rgba(0,0,0,.12);
+  background:rgba(255,255,255,.7);
+  box-shadow:0 6px 14px rgba(0,0,0,.06);
+  font-size:1.05rem;
+}
+.miniBtn{
+  border:none;
+  border-radius:999px;
+  padding:10px 12px;
+  background:#ffffffcc;
+  border:3px solid rgba(0,0,0,.12);
+  box-shadow:0 6px 14px rgba(0,0,0,.06);
+  cursor:pointer;
+  font-family:'Schoulschrëft', Arial, sans-serif;
+  font-size:1.05rem;
+}
+.miniBtn:active{transform:scale(.99);}
+.miniBtn[disabled]{opacity:.55; cursor:not-allowed;}
+.hr{
+  height:1px; background:rgba(0,0,0,.1);
+  margin:10px 0 12px;
+}
+
+.toast{
+  position:fixed;
+  left:50%; bottom:16px;
+  transform:translateX(-50%);
+  background:rgba(255,255,255,.92);
+  border:3px solid rgba(0,0,0,.12);
+  box-shadow:var(--shadow);
+  border-radius:999px;
+  padding:10px 14px;
+  font-size:1.05rem;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .18s ease, transform .18s ease;
+  z-index:50;
+}
+.toast.show{opacity:1; transform:translateX(-50%) translateY(-4px);}
+
+@keyframes shake{
+  0%,100%{transform:translateX(0);}
+  20%{transform:translateX(-6px);}
+  40%{transform:translateX(6px);}
+  60%{transform:translateX(-4px);}
+  80%{transform:translateX(4px);}
+}
+
+/* GAME 1 */
+.g1Wrap{display:flex; flex-direction:column; gap:12px;}
+.g1Top{
+  display:flex; gap:10px; align-items:center; flex-wrap:wrap;
+}
+.g1Prompt{
+  flex:1;
+  min-width:220px;
+  background:rgba(255,255,255,.65);
+  border:3px solid rgba(0,0,0,.12);
+  border-radius:14px;
+  padding:10px 12px;
+  box-shadow:0 6px 14px rgba(0,0,0,.05);
+}
+.g1Slots{
+  display:flex; gap:6px; flex-wrap:wrap;
+  align-items:center;
+  padding:10px 10px;
+  background:rgba(255,255,255,.65);
+  border:3px solid rgba(0,0,0,.12);
+  border-radius:14px;
+  min-height:58px;
+  box-shadow:0 6px 14px rgba(0,0,0,.05);
+}
+.slot{
+  width:42px; height:42px;
+  display:grid; place-items:center;
+  border-radius:12px;
+  border:3px dashed rgba(0,0,0,.18);
+  background:rgba(255,255,255,.6);
+  font-size:1.25rem;
+}
+.slot.filled{
+  border-style:solid;
+  border-color:rgba(0,0,0,.12);
+  cursor:pointer;
+}
+.slot.good{background:rgba(183,240,200,.8);}
+.slot.bad{background:rgba(255,204,204,.85);}
+.g1Letters{
+  display:flex; gap:8px; flex-wrap:wrap;
+  justify-content:flex-start;
+}
+.letterBtn{
+  min-width:46px; height:46px;
+  padding:0 12px;
+  border-radius:14px;
+  border:3px solid rgba(0,0,0,.12);
+  background:rgba(255,255,255,.9);
+  box-shadow:0 6px 14px rgba(0,0,0,.06);
+  cursor:pointer;
+  font-family:'Schoulschrëft', Arial, sans-serif;
+  font-size:1.2rem;
+  display:grid; place-items:center;
+}
+.letterBtn:active{transform:scale(.99);}
+.letterBtn[disabled]{opacity:.45; cursor:not-allowed;}
+.g1Foot{
+  display:flex; gap:10px; flex-wrap:wrap;
+  align-items:center;
+}
+
+/* GAME 2 */
+.g2Wrap{display:flex; flex-direction:column; gap:12px;}
+.g2Stage{
+  width:100%;
+  max-width:980px;
+  margin:0 auto;
+  position:relative;
+  border-radius:18px;
+  overflow:hidden;
+  border:3px solid rgba(0,0,0,.12);
+  background:rgba(255,255,255,.55);
+  box-shadow:0 10px 24px rgba(0,0,0,.06);
+}
+.g2Stage::before{
+  content:"";
+  display:block;
+  padding-top:141%; /* keeps aspect-ish; tuned for your blank image */
+}
+.g2Img{
+  position:absolute; inset:0;
+  width:100%; height:100%;
+  object-fit:contain;
+  pointer-events:none;
+}
+.hit{
+  position:absolute;
+  border-radius:999px;
+  cursor:pointer;
+  background:rgba(255,255,255,0); /* transparent hit area */
+}
+.hit:active{transform:scale(.995);}
+.hit.flashGood{background:rgba(183,240,200,.45);}
+.hit.flashBad{background:rgba(255,204,204,.55); animation:shake .25s linear;}
+.wordOnPill{
+  position:absolute;
+  left:50%; top:50%;
+  transform:translate(-50%,-50%);
+  width:92%;
+  height:auto;
+  pointer-events:none;
+  filter:drop-shadow(0 6px 10px rgba(0,0,0,.10));
+}
+.bubble{
+  position:absolute;
+  width:110px; height:110px;
+  border-radius:999px;
+  display:grid; place-items:center;
+  border:3px solid rgba(0,0,0,.12);
+  background:rgba(255,255,255,.92);
+  box-shadow:0 10px 22px rgba(0,0,0,.12);
+  cursor:pointer;
+  z-index:5;
+}
+.bubble:active{transform:scale(.99);}
+.bubble img{
+  width:62px; height:62px;
+  object-fit:contain;
+}
+.bubble.small{
+  width:92px; height:92px;
+}
+.g2Top{
+  display:flex; gap:10px; flex-wrap:wrap;
+  align-items:center;
+  justify-content:space-between;
+}
+.g2Info{
+  display:flex; gap:10px; flex-wrap:wrap;
+  align-items:center;
+}
+.counter{
+  display:inline-flex; align-items:center;
+  padding:10px 12px;
+  border-radius:999px;
+  border:3px solid rgba(0,0,0,.12);
+  background:rgba(255,255,255,.7);
+  box-shadow:0 6px 14px rgba(0,0,0,.06);
+  font-size:1.05rem;
+}
+</style>
+</head>
+
+<body>
+
+<div class="topBar">
+  <button class="barBtn back" id="prev" aria-label="Virdrun">
+    <img src="https://i.postimg.cc/k6VtHrh0/p4arrow.png" alt="">
+  </button>
+
+  <h1 class="barTitle" id="gameTitle">P4 – Titel vum Spill</h1>
+
+  <div class="barRight">
+    <button class="barBtn" id="play" aria-label="Play">
+      <img src="https://i.postimg.cc/WFDJyRHR/p4play.png" alt="">
+    </button>
+    <button class="barBtn" id="replay" aria-label="Replay">
+      <img src="https://i.postimg.cc/BL81zWVs/p4replay.png" alt="">
+    </button>
+    <button class="barBtn" id="next" aria-label="Nächst">
+      <img src="https://i.postimg.cc/k6VtHrh0/p4arrow.png" alt="">
+    </button>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="card">
+    <p class="cardTitle" id="cardTitle">Spill</p>
+    <div id="gameHost"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast">✔</div>
+
+<script>
+/* =========================
+   DATA / CONTENT (EDITABLE)
+   ========================= */
+
+/* Base paths (keep as-is or adapt to your GitHub structure) */
+const AUDIO_BASE = "./audio/";   // e.g. ./audio/kapp.mp3
+const LAUSCHTER_ICON = "https://i.postimg.cc/WFDJyRHR/p4play.png"; // "lauschter" visual in bubble (you said "from the link" → using your play icon)
+
+/* Vocabulary list (same ids used in both games) */
+const ITEMS = [
+  {id:"a",         label:"d'A",        audio:"a.mp3",        wordImg:"https://i.postimg.cc/nXyLpCjf/a.png"},
+  {id:"aarm",      label:"den Aarm",    audio:"aarm.mp3",     wordImg:"https://i.postimg.cc/18kzsfnQ/aarm.png"},
+  {id:"bauch",     label:"de Bauch",    audio:"bauch.mp3",    wordImg:"https://i.postimg.cc/wtDjvgJG/bauch.png"},
+  {id:"been",      label:"d'Been",      audio:"been.mp3",     wordImg:"https://i.postimg.cc/2qnS6rv9/been.png"},
+  {id:"fanger",    label:"de Fanger",   audio:"fanger.mp3",   wordImg:"https://i.postimg.cc/bG1wJpbF/fanger.png"},
+  {id:"fouss",     label:"de Fouss",    audio:"fouss.mp3",    wordImg:"https://i.postimg.cc/p9KLTR83/fouss.png"},
+  {id:"hals",      label:"den Hals",    audio:"hals.mp3",     wordImg:"https://i.postimg.cc/DW1wZnsN/hals.png"},
+  {id:"hand",      label:"d'Hand",      audio:"hand.mp3",     wordImg:"https://i.postimg.cc/B82n64Dy/hand.png"},
+  {id:"henner",    label:"den Hënner",  audio:"henner.mp3",   wordImg:"https://i.postimg.cc/PL15xTZB/henner.png"},
+  {id:"hoer",      label:"d'Hoer",      audio:"hoer.mp3",     wordImg:"https://i.postimg.cc/WD013TgL/hoer.png"},
+  {id:"kapp",      label:"de Kapp",     audio:"kapp.mp3",     wordImg:"https://i.postimg.cc/yJ08dscq/kapp.png"},
+  {id:"kenn",      label:"de Kënn",     audio:"kenn.mp3",     wordImg:"https://i.postimg.cc/WD013Tgc/kenn.png"},
+  {id:"knei",      label:"de Knéi",     audio:"knei.mp3",     wordImg:"https://i.postimg.cc/94yQMCZj/knei.png"},
+  {id:"mond",      label:"de Mond",     audio:"mond.mp3",     wordImg:"https://i.postimg.cc/3y2xRYmT/mond.png"},
+  {id:"nues",      label:"d'Nues",      audio:"nues.mp3",     wordImg:"https://i.postimg.cc/94yQMCZV/nues.png"},
+  {id:"ouer",      label:"d'Ouer",      audio:"ouer.mp3",     wordImg:"https://i.postimg.cc/7CSZ6w04/ouer.png"},
+  {id:"reck",      label:"de Réck",     audio:"reck.mp3",     wordImg:"https://i.postimg.cc/GBvm2dGd/reck.png"},
+  {id:"scheller",  label:"d'Schëller",  audio:"scheller.mp3", wordImg:"https://i.postimg.cc/7CSZ6w0q/scheller.png"},
+  {id:"stier",     label:"d'Stier",     audio:"stier.mp3",    wordImg:"https://i.postimg.cc/DW1wZnLy/stier.png"},
+  {id:"zand",      label:"den Zand",    audio:"zand.mp3",     wordImg:"https://i.postimg.cc/qt2vR4yB/zand.png"},
+  {id:"zeif",      label:"d'Zéif",      audio:"zeif.mp3",     wordImg:"https://i.postimg.cc/Lqj8X2L8/zeif.png"}
+];
+
+/* Game 2 background */
+const G2_BG = "https://i.postimg.cc/y6r9LvkP/Kierper-P4-blank.png";
+
+/* Game 2 pill hitboxes (percentage positions relative to image container).
+   These are tuned guesses; adjust if needed.
+   Format: {id, x, y, w, h} in % (0–100), where x/y are top-left.
+*/
+const G2_HITS = [
+  // LEFT BODY
+  {id:"hals",     x: 6.5,  y: 11.8, w: 30.0, h: 5.6},
+  {id:"scheller", x: 6.5,  y: 18.7, w: 30.0, h: 5.6},
+  {id:"bauch",    x: 6.5,  y: 25.6, w: 30.0, h: 5.6},
+  {id:"henner",   x: 6.5,  y: 32.5, w: 30.0, h: 5.6},
+  {id:"hand",     x: 6.5,  y: 39.4, w: 30.0, h: 5.6},
+  {id:"knei",     x: 6.5,  y: 52.7, w: 30.0, h: 5.6},
+  {id:"zeif",     x: 6.5,  y: 65.6, w: 30.0, h: 5.6},
+
+  // RIGHT BODY
+  {id:"kapp",     x: 63.5, y: 11.8, w: 30.0, h: 5.6},
+  {id:"fanger",   x: 63.5, y: 18.7, w: 30.0, h: 5.6},
+  {id:"reck",     x: 63.5, y: 25.6, w: 30.0, h: 5.6},
+  {id:"aarm",     x: 63.5, y: 32.5, w: 30.0, h: 5.6},
+  {id:"been",     x: 63.5, y: 45.6, w: 30.0, h: 5.6},
+  {id:"fouss",    x: 63.5, y: 65.6, w: 30.0, h: 5.6},
+
+  // FACE (bottom section)
+  {id:"stier",    x: 10.0, y: 79.6, w: 30.0, h: 5.4},
+  {id:"a",        x: 10.0, y: 85.8, w: 30.0, h: 5.4},
+  {id:"nues",     x: 10.0, y: 92.0, w: 30.0, h: 5.4},
+  {id:"mond",     x: 10.0, y: 98.0, w: 30.0, h: 0.0}, // unused spacer (safe)
+  {id:"hoer",     x: 64.0, y: 82.3, w: 30.0, h: 5.4},
+  {id:"ouer",     x: 64.0, y: 88.5, w: 30.0, h: 5.4},
+  {id:"zand",     x: 64.0, y: 94.7, w: 30.0, h: 5.4},
+  {id:"kenn",     x: 64.0, y: 100.0,w: 30.0, h: 0.0}  // unused spacer (safe)
+];
+
+/* =========================
+   END DATA / CONTENT
+   ========================= */
+
+const $ = (q,root=document)=>root.querySelector(q);
+const host = $("#gameHost");
+const titleEl = $("#gameTitle");
+const cardTitleEl = $("#cardTitle");
+const toast = $("#toast");
+
+let audio = new Audio();
+audio.preload = "auto";
+
+function speak(file){
+  try{
+    audio.pause();
+    audio.currentTime = 0;
+  }catch(e){}
+  audio = new Audio(AUDIO_BASE + file);
+  audio.preload = "auto";
+  audio.play().catch(()=>{});
+}
+
+function showToast(msg){
+  toast.textContent = msg;
+  toast.classList.add("show");
+  setTimeout(()=>toast.classList.remove("show"), 900);
+}
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+
+function normLetters(str){
+  // keep letters + apostrophe; normalize to lower for comparisons
+  return str.toLowerCase();
+}
+
+function makeLetterPool(word){
+  // word like "d'Knéi" should become letters for spelling word itself (without article label)
+  // Here we use the ID to pick the spelling from label but remove leading article if present.
+  // Prefer: use the label text AFTER article (e.g. "den Aarm" -> "Aarm", "d'Been" -> "Been", "d'A" -> "A")
+  const raw = word.trim();
+  const parts = raw.split(" ");
+  let core = raw;
+  if(parts.length>=2){
+    core = parts.slice(1).join(" ");
+  }else{
+    // e.g. "d'A" — remove leading "d'"
+    core = raw.replace(/^d'/i,"").replace(/^d’/i,"").replace(/^den /i,"").replace(/^de /i,"").replace(/^d' /i,"").trim();
+  }
+  // remove any leading article remnants like d'
+  core = core.replace(/^d'/i,"").replace(/^d’/i,"").trim();
+  // letters as array (keep accents)
+  return core.split("");
+}
+
+/* ========= GAME NAV ========= */
+
+const GAMES = [
+  { key:"g1", title:"P4 – Lauschter a schreif d'Wuert", render: renderGame1 },
+  { key:"g2", title:"P4 – Lauschter an zéi d'Bull op déi richteg Plaz", render: renderGame2 }
+];
+
+let gameIndex = 0;
+
+function render(){
+  const g = GAMES[gameIndex];
+  titleEl.textContent = g.title;
+  cardTitleEl.textContent = "Spill " + (gameIndex+1) + " / " + GAMES.length;
+  host.innerHTML = "";
+  g.render();
+}
+
+$("#prev").onclick = ()=>{
+  gameIndex = (gameIndex - 1 + GAMES.length) % GAMES.length;
+  render();
+};
+$("#next").onclick = ()=>{
+  gameIndex = (gameIndex + 1) % GAMES.length;
+  render();
+};
+$("#play").onclick = ()=>{
+  // Delegate to current game handler
+  if(currentHandlers.play) currentHandlers.play();
+};
+$("#replay").onclick = ()=>{
+  if(currentHandlers.replay) currentHandlers.replay();
+};
+
+let currentHandlers = { play:null, replay:null };
+
+/* ========= GAME 1: click-and-place spelling ========= */
+
+function renderGame1(){
+  const wrap = document.createElement("div");
+  wrap.className = "g1Wrap";
+
+  const top = document.createElement("div");
+  top.className = "g1Top";
+
+  const prompt = document.createElement("div");
+  prompt.className = "g1Prompt";
+  prompt.innerHTML = `
+    <div class="sub" style="margin:0;">
+      Klick op <span class="pill"><img src=${JSON.stringify($("#play img").src)} alt="" style="width:22px;height:22px;object-fit:contain;"> lauschter</span> an da klick d’Buschtawen an déi richteg Reiefolleg.
+      <br/>Klick op e Buschtaw an den Kästchen fir en erëm ewechzehuelen.
+    </div>
+  `;
+
+  const btnNextWord = document.createElement("button");
+  btnNextWord.className = "miniBtn";
+  btnNextWord.textContent = "Nächst Wuert";
+
+  top.appendChild(prompt);
+  top.appendChild(btnNextWord);
+
+  const slots = document.createElement("div");
+  slots.className = "g1Slots";
+
+  const letters = document.createElement("div");
+  letters.className = "g1Letters";
+
+  const foot = document.createElement("div");
+  foot.className = "g1Foot";
+
+  const btnCheck = document.createElement("button");
+  btnCheck.className = "miniBtn";
+  btnCheck.textContent = "Kucken";
+
+  const btnClear = document.createElement("button");
+  btnClear.className = "miniBtn";
+  btnClear.textContent = "Eidel maachen";
+
+  const counter = document.createElement("div");
+  counter.className = "pill";
+  counter.textContent = "0 / 0";
+
+  foot.appendChild(btnCheck);
+  foot.appendChild(btnClear);
+  foot.appendChild(counter);
+
+  wrap.appendChild(top);
+  wrap.appendChild(document.createElement("div")).className="hr";
+  wrap.appendChild(slots);
+  wrap.appendChild(letters);
+  wrap.appendChild(foot);
+
+  host.appendChild(wrap);
+
+  // state
+  let order = shuffle(ITEMS);
+  let idx = 0;
+  let answer = [];
+  let pool = [];
+  let poolDisabled = new Set();
+
+  function setCounter(){
+    counter.textContent = (idx+1) + " / " + order.length;
+  }
+
+  function build(){
+    const item = order[idx];
+    poolDisabled.clear();
+    answer = [];
+    pool = makeLetterPool(item.label);
+    // create slots
+    slots.innerHTML = "";
+    pool.forEach(()=>{});
+    for(let i=0;i<pool.length;i++){
+      const s = document.createElement("div");
+      s.className = "slot";
+      s.dataset.i = String(i);
+      s.onclick = ()=>{
+        if(!s.classList.contains("filled")) return;
+        // remove
+        const letter = s.textContent;
+        s.textContent = "";
+        s.classList.remove("filled","good","bad");
+        // remove from answer (first matching from end to keep stable)
+        for(let k=answer.length-1;k>=0;k--){
+          if(answer[k]===letter){ answer.splice(k,1); break; }
+        }
+        // re-enable one matching letter button that is disabled
+        const btn = letters.querySelector(`button[data-letter=${CSS.escape(letter)}][disabled]`);
+        if(btn){ btn.disabled = false; }
+      };
+      slots.appendChild(s);
+    }
+
+    // letter pool buttons
+    letters.innerHTML = "";
+    const mixed = shuffle(pool.slice());
+    mixed.forEach((ch, j)=>{
+      const b = document.createElement("button");
+      b.className = "letterBtn";
+      b.textContent = ch;
+      b.dataset.letter = ch;
+      b.onclick = ()=>{
+        // place in next empty slot
+        const empty = slots.querySelector(".slot:not(.filled)");
+        if(!empty) return;
+        empty.textContent = ch;
+        empty.classList.add("filled");
+        empty.classList.remove("good","bad");
+        answer.push(ch);
+        b.disabled = true;
+      };
+      letters.appendChild(b);
+    });
+
+    setCounter();
+  }
+
+  function playCurrent(){
+    const item = order[idx];
+    speak(item.audio);
+  }
+
+  function clearAll(){
+    // re-enable all letter buttons
+    letters.querySelectorAll("button.letterBtn").forEach(b=>b.disabled=false);
+    answer = [];
+    slots.querySelectorAll(".slot").forEach(s=>{
+      s.textContent="";
+      s.classList.remove("filled","good","bad");
+    });
+  }
+
+  function check(){
+    const item = order[idx];
+    const expected = makeLetterPool(item.label);
+    const got = slots.querySelectorAll(".slot");
+    let ok = true;
+    for(let i=0;i<expected.length;i++){
+      const ch = got[i].textContent || "";
+      if(ch !== expected[i]) ok=false;
+    }
+    got.forEach((s,i)=>{
+      if(!s.textContent){
+        s.classList.remove("good"); s.classList.add("bad");
+        return;
+      }
+      if(s.textContent === expected[i]){
+        s.classList.remove("bad"); s.classList.add("good");
+      }else{
+        s.classList.remove("good"); s.classList.add("bad");
+      }
+    });
+
+    if(ok){
+      showToast("✔ Bravo!");
+      setTimeout(()=>nextWord(), 650);
+    }else{
+      showToast("Nach emol…");
+      slots.style.animation="shake .25s linear";
+      setTimeout(()=>slots.style.animation="", 260);
+    }
+  }
+
+  function nextWord(){
+    idx = (idx + 1) % order.length;
+    build();
+  }
+
+  btnNextWord.onclick = ()=>{
+    nextWord();
+  };
+  btnClear.onclick = clearAll;
+  btnCheck.onclick = check;
+
+  currentHandlers.play = playCurrent;
+  currentHandlers.replay = ()=>{
+    clearAll();
+    playCurrent();
+  };
+
+  build();
+}
+
+/* ========= GAME 2: click bubble then click pill (place) ========= */
+
+function renderGame2(){
+  const wrap = document.createElement("div");
+  wrap.className = "g2Wrap";
+
+  const top = document.createElement("div");
+  top.className = "g2Top";
+
+  const info = document.createElement("div");
+  info.className = "g2Info";
+
+  const instr = document.createElement("div");
+  instr.className = "pill";
+  instr.innerHTML = `Klick op <img src=${JSON.stringify(LAUSCHTER_ICON)} alt="" style="width:22px;height:22px;object-fit:contain;"> fir ze lauschteren. Klick d’Bull un, da klick op déi richteg Plaz.`;
+
+  const counter = document.createElement("div");
+  counter.className = "counter";
+  counter.textContent = "0 / 0";
+
+  const btnNew = document.createElement("button");
+  btnNew.className = "miniBtn";
+  btnNew.textContent = "Nei Ronn";
+
+  info.appendChild(instr);
+  info.appendChild(counter);
+
+  top.appendChild(info);
+  top.appendChild(btnNew);
+
+  const stage = document.createElement("div");
+  stage.className = "g2Stage";
+
+  const img = document.createElement("img");
+  img.className = "g2Img";
+  img.src = G2_BG;
+  img.alt = "";
+
+  stage.appendChild(img);
+
+  // hits + word overlays
+  const hits = new Map();
+  const overlays = new Map();
+
+  // filter: only ids that exist in hit config and items
+  const hitById = new Map(G2_HITS.filter(h=>h.h>0).map(h=>[h.id,h]));
+  const itemById = new Map(ITEMS.map(it=>[it.id,it]));
+
+  // build hit buttons
+  [...hitById.values()].forEach(h=>{
+    const btn = document.createElement("button");
+    btn.className = "hit";
+    btn.type = "button";
+    btn.setAttribute("aria-label", h.id);
+
+    btn.style.left = h.x + "%";
+    btn.style.top  = h.y + "%";
+    btn.style.width  = h.w + "%";
+    btn.style.height = h.h + "%";
+
+    // word overlay (hidden until correct)
+    const ov = document.createElement("img");
+    ov.className = "wordOnPill";
+    ov.style.display = "none";
+    const it = itemById.get(h.id);
+    if(it) ov.src = it.wordImg;
+
+    btn.appendChild(ov);
+
+    hits.set(h.id, btn);
+    overlays.set(h.id, ov);
+
+    stage.appendChild(btn);
+  });
+
+  // bubble
+  const bubble = document.createElement("button");
+  bubble.className = "bubble";
+  bubble.type = "button";
+  bubble.setAttribute("aria-label","Bull");
+
+  const bImg = document.createElement("img");
+  bImg.src = LAUSCHTER_ICON;
+  bImg.alt = "";
+  bubble.appendChild(bImg);
+
+  // default bubble position (top-left area)
+  bubble.style.left = "6%";
+  bubble.style.top  = "6%";
+  stage.appendChild(bubble);
+
+  wrap.appendChild(top);
+  wrap.appendChild(stage);
+  host.appendChild(wrap);
+
+  let order = [];
+  let idx = 0;
+  let armed = false;          // bubble selected
+  let solved = new Set();
+
+  function setCounter(){
+    counter.textContent = (idx+1) + " / " + order.length;
+  }
+
+  function newRound(){
+    solved.clear();
+    // clear overlays
+    overlays.forEach(ov=>ov.style.display="none");
+    // order only includes items that have hits defined
+    const usable = ITEMS.filter(it=>hitById.has(it.id));
+    order = shuffle(usable);
+    idx = 0;
+    armed = false;
+    bubble.classList.remove("small");
+    bubble.style.left = "6%";
+    bubble.style.top  = "6%";
+    setCounter();
+    showToast("Los!");
+  }
+
+  function current(){
+    return order[idx];
+  }
+
+  function playCurrent(){
+    const it = current();
+    if(!it) return;
+    speak(it.audio);
+  }
+
+  function armBubble(){
+    if(!current()) return;
+    armed = !armed;
+    bubble.classList.toggle("small", armed);
+  }
+
+  function flash(btn, ok){
+    btn.classList.remove("flashGood","flashBad");
+    void btn.offsetWidth; // reflow
+    btn.classList.add(ok ? "flashGood" : "flashBad");
+    setTimeout(()=>btn.classList.remove("flashGood","flashBad"), 260);
+  }
+
+  function next(){
+    idx++;
+    if(idx >= order.length){
+      showToast("✔ Fäerdeg!");
+      idx = order.length-1;
+      armed = false;
+      bubble.classList.remove("small");
+      return;
+    }
+    setCounter();
+    armed = false;
+    bubble.classList.remove("small");
+  }
+
+  // bubble click toggles "picked up"
+  bubble.onclick = ()=>{
+    armBubble();
+    if(armed) playCurrent();
+  };
+
+  // hit logic
+  hits.forEach((btn, id)=>{
+    btn.onclick = ()=>{
+      if(!current()) return;
+      if(!armed) return;
+
+      const it = current();
+      const ok = (id === it.id);
+
+      if(ok){
+        flash(btn,true);
+        const ov = overlays.get(id);
+        if(ov){
+          ov.style.display = "block";
+        }
+        solved.add(id);
+        showToast("✔ Bravo!");
+        setTimeout(()=>{
+          next();
+          playCurrent();
+        }, 520);
+      }else{
+        flash(btn,false);
+        showToast("Nach emol…");
+        armed = false;
+        bubble.classList.remove("small");
+      }
+    };
+  });
+
+  btnNew.onclick = ()=>{
+    newRound();
+    playCurrent();
+  };
+
+  currentHandlers.play = playCurrent;
+  currentHandlers.replay = ()=>{
+    // reset just the current word attempt (bubble armed off) + replay audio
+    armed = false;
+    bubble.classList.remove("small");
+    playCurrent();
+  };
+
+  // init
+  newRound();
+  playCurrent();
+}
+
+/* INIT */
+render();
+</script>
+
+</body>
+</html>
